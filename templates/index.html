@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Olympic Performance Intelligence Platform</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <style>
+    /* ===== CSS Custom Properties ===== */
+    :root {
+      --gold:     #f4c300;
+      --gold-dark:#c9a000;
+      --red:      #df3e41;
+      --navy:     #0a192f;
+      --navy-mid: #112240;
+      --navy-card:#1a2f4e;
+      --navy-hover:#223355;
+      --text-main:#ccd6f6;
+      --text-dim: #8892b0;
+      --accent:   #64ffda;
+    }
+
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Inter", sans-serif;
+      background-color: var(--navy);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { color: var(--gold-dark); }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--navy-mid); }
+    ::-webkit-scrollbar-thumb { background: var(--navy-card); border-radius: 4px; }
+
+    /* ===== Navigation ===== */
+    .navbar {
+      background: rgba(10,25,47,0.95) !important;
+      border-bottom: 2px solid var(--gold);
+      backdrop-filter: blur(12px);
+      padding: 0.7rem 1.5rem;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar-brand {
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.1rem;
+      color: var(--gold) !important;
+      letter-spacing: 1px;
+    }
+    .nav-link {
+      color: var(--text-main) !important;
+      font-weight: 500;
+      padding: 0.4rem 0.9rem !important;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: rgba(244,195,0,0.12);
+      color: var(--gold) !important;
+    }
+    .btn-explore {
+      background: var(--gold);
+      color: #111 !important;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 0.4rem 1.2rem;
+      border: none;
+      transition: all 0.25s;
+    }
+    .btn-explore:hover {
+      background: var(--gold-dark);
+      transform: scale(1.04);
+    }
+
+    /* ===== Hero ===== */
+    #hero {
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(10,25,47,0.93) 0%, rgba(17,34,64,0.95) 100%),
+        url('https://images.pexels.com/photos/1263348/pexels-photo-1263348.jpeg?auto=compress&cs=tinysrgb&w=1600') center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      padding-top: 80px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(244,195,0,0.15);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 20px;
+      padding: 0.3rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+    }
+    .hero-title {
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+    .hero-title span { color: var(--gold); }
+    .hero-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-dim);
+      max-width: 540px;
+      line-height: 1.7;
+    }
+    .hero-rings {
+      font-size: clamp(5rem, 12vw, 10rem);
+      line-height: 1;
+      filter: drop-shadow(0 8px 24px rgba(244,195,0,0.35));
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-18px); }
+    }
+
+    /* ===== KPI Cards ===== */
+    #kpis { padding: 3.5rem 0; }
+    .kpi-card {
+      background: var(--navy-card);
+      border: 1px solid rgba(244,195,0,0.15);
+      border-radius: 14px;
+      padding: 1.6rem 1.4rem;
+      text-align: center;
+      transition: transform 0.25s, border-color 0.25s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--gold);
+    }
+    .kpi-icon {
+      font-size: 2.2rem;
+      margin-bottom: 0.7rem;
+    }
+    .kpi-value {
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .kpi-label {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 0.3rem;
+    }
+
+    /* ===== Section Common ===== */
+    .section-header {
+      text-align: center;
+      margin-bottom: 2.8rem;
+    }
+    .section-header h2 {
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.8rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .section-header h2 span { color: var(--gold); }
+    .section-header p {
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .divider {
+      width: 60px;
+      height: 3px;
+      background: var(--gold);
+      margin: 0.7rem auto 1.2rem;
+      border-radius: 2px;
+    }
+
+    /* ===== Chart Cards ===== */
+    .chart-card {
+      background: var(--navy-card);
+      border: 1px solid rgba(100,255,218,0.07);
+      border-radius: 14px;
+      padding: 1.2rem;
+      margin-bottom: 1.8rem;
+      transition: border-color 0.3s;
+    }
+    .chart-card:hover { border-color: rgba(244,195,0,0.25); }
+    .chart-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 0.8rem;
+    }
+    .chart-placeholder {
+      height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+    }
+    .spinner-gold {
+      border-color: rgba(244,195,0,0.25);
+      border-top-color: var(--gold);
+    }
+
+    /* ===== Country Search ===== */
+    #country-search-section { padding: 3rem 0; background: var(--navy-mid); }
+    .search-box {
+      background: var(--navy-card);
+      border: 1px solid rgba(244,195,0,0.3);
+      border-radius: 10px;
+      color: var(--text-main);
+      padding: 0.7rem 1.2rem;
+      font-size: 1rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus { border-color: var(--gold); }
+    .search-box::placeholder { color: var(--text-dim); }
+    .btn-search {
+      background: var(--gold);
+      color: #111;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 0.7rem 1.5rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-search:hover { background: var(--gold-dark); }
+
+    /* ===== Leaderboard Table ===== */
+    #leaderboard-section { padding: 3.5rem 0; }
+    .table-dark-custom {
+      background: transparent;
+      color: var(--text-main);
+      border-collapse: separate;
+      border-spacing: 0 6px;
+    }
+    .table-dark-custom thead th {
+      background: var(--navy-card);
+      color: var(--gold);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      border: none;
+      padding: 0.85rem 1rem;
+    }
+    .table-dark-custom tbody tr {
+      background: var(--navy-card);
+      transition: background 0.2s;
+    }
+    .table-dark-custom tbody tr:hover { background: var(--navy-hover); }
+    .table-dark-custom tbody td {
+      border: none;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    .rank-1 { background: #FFD700; color: #111; }
+    .rank-2 { background: #C0C0C0; color: #111; }
+    .rank-3 { background: #CD7F32; color: #fff; }
+    .rank-other { background: rgba(100,255,218,0.1); color: var(--accent); }
+
+    /* ===== Insights Section ===== */
+    #insights-section { padding: 3.5rem 0; background: var(--navy-mid); }
+    .insight-card {
+      background: var(--navy-card);
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      padding: 1.3rem 1.5rem;
+      margin-bottom: 1rem;
+      transition: border-left-color 0.2s, transform 0.2s;
+    }
+    .insight-card:hover {
+      border-left-color: var(--accent);
+      transform: translateX(4px);
+    }
+    .insight-card h6 {
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .insight-card p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    /* ===== Tabs ===== */
+    .nav-tabs-custom { border-bottom: 2px solid var(--navy-card); margin-bottom: 1.5rem; }
+    .nav-tabs-custom .nav-link {
+      background: transparent;
+      border: none;
+      color: var(--text-dim) !important;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .nav-tabs-custom .nav-link:hover { color: var(--text-main) !important; }
+    .nav-tabs-custom .nav-link.active {
+      color: var(--gold) !important;
+      border-bottom-color: var(--gold);
+      background: transparent;
+    }
+
+    /* ===== Footer ===== */
+    footer {
+      background: var(--navy-mid);
+      border-top: 1px solid rgba(244,195,0,0.15);
+      padding: 2rem 0;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.88rem;
+    }
+    footer span { color: var(--gold); }
+
+    /* ===== Scroll-to-top ===== */
+    #scroll-top {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--gold);
+      color: #111;
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(244,195,0,0.4);
+      transition: transform 0.2s;
+      z-index: 999;
+    }
+    #scroll-top:hover { transform: scale(1.1); }
+    #scroll-top.visible { display: flex; }
+
+    /* ===== Responsiveness ===== */
+    @media (max-width: 768px) {
+      .hero-title { font-size: 1.7rem; }
+      .kpi-value { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ===== Navigation ===== -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="#hero">
+      <i class="bi bi-trophy-fill me-2"></i>Olympics Analytics
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+      <i class="bi bi-list" style="color:var(--gold);font-size:1.4rem;"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navContent">
+      <ul class="navbar-nav ms-auto align-items-center gap-1">
+        <li class="nav-item"><a class="nav-link active" href="#hero">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#kpis">Overview</a></li>
+        <li class="nav-item"><a class="nav-link" href="#charts">Charts</a></li>
+        <li class="nav-item"><a class="nav-link" href="#country-search-section">Country</a></li>
+        <li class="nav-item"><a class="nav-link" href="#leaderboard-section">Leaderboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="#insights-section">Insights</a></li>
+      </ul>
+      <a class="btn-explore ms-3" href="#charts">Explore Data ↓</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section id="hero">
+  <div class="container">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-7">
+        <div class="hero-badge">🏅 Data-Driven Olympic Intelligence</div>
+        <h1 class="hero-title">
+          Global <span>Olympic</span><br>Performance Analysis
+        </h1>
+        <p class="hero-subtitle">
+          Explore 35+ years of Olympic history through real data — medal trends,
+          athlete performance, regional efficiency, sports investment, and host-nation
+          advantage — all powered by Python, Pandas &amp; Plotly.
+        </p>
+        <div class="mt-4 d-flex flex-wrap gap-3">
+          <a class="btn-explore" href="#charts">Explore Dashboards</a>
+          <a class="btn btn-outline-light rounded-pill px-4" href="#leaderboard-section">
+            <i class="bi bi-list-ol me-1"></i>Leaderboard
+          </a>
+        </div>
+        <!-- Stat pills -->
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          {% for stat in [
+              ("🌍", "{{ kpis.total_countries }}+", "Nations"),
+              ("🏅", "{{ kpis.total_games }}", "Games"),
+              ("🏃", "{{ kpis.total_athletes }}+", "Athletes"),
+              ("⚽", "{{ kpis.total_sports }}+", "Sports")
+          ] %}
+          {% endfor %}
+          <div class="d-flex align-items-center gap-2 bg-navy-card px-3 py-2 rounded-3" style="background:rgba(26,47,78,0.7);border:1px solid rgba(244,195,0,0.2)">
+            <span>🌍</span>
+            <div>
+              <div style="font-weight:700;color:var(--gold);">{{ kpis.total_countries }}+</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);">Nations</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background:rgba(26,47,78,0.7);border:1px solid rgba(244,195,0,0.2)">
+            <span>🏅</span>
+            <div>
+              <div style="font-weight:700;color:var(--gold);">{{ kpis.total_games }}</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);">Games</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background:rgba(26,47,78,0.7);border:1px solid rgba(244,195,0,0.2)">
+            <span>🏃</span>
+            <div>
+              <div style="font-weight:700;color:var(--gold);">{{ kpis.total_athletes }}+</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);">Athletes</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background:rgba(26,47,78,0.7);border:1px solid rgba(244,195,0,0.2)">
+            <span>⚽</span>
+            <div>
+              <div style="font-weight:700;color:var(--gold);">{{ kpis.total_sports }}+</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);">Sports</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 text-center">
+        <div class="hero-rings">🏅</div>
+        <div class="mt-3" style="color:var(--text-dim);font-size:0.85rem;">
+          <i class="bi bi-star-fill text-warning me-1"></i>
+          Top performer: <strong style="color:var(--gold)">{{ kpis.top_country }}</strong>
+          with {{ kpis.top_country_medals }} all-time medals
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== KPI Cards ===== -->
+<section id="kpis" class="py-5">
+  <div class="container">
+    <div class="section-header">
+      <h2>Platform <span>Overview</span></h2>
+      <div class="divider"></div>
+      <p>Key statistics computed in real-time from the cleaned Olympic datasets.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-6 col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-icon">🌍</div>
+          <div class="kpi-value">{{ kpis.total_countries }}</div>
+          <div class="kpi-label">Countries Analyzed</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-icon">🏟️</div>
+          <div class="kpi-value">{{ kpis.total_games }}</div>
+          <div class="kpi-label">Olympic Games (1992–2026)</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-icon">🏃</div>
+          <div class="kpi-value">{{ kpis.total_athletes }}+</div>
+          <div class="kpi-label">Unique Athletes</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="kpi-card">
+          <div class="kpi-icon">⚽</div>
+          <div class="kpis-value" style="font-family:Orbitron,sans-serif;font-size:1.9rem;font-weight:700;color:var(--gold);">{{ kpis.total_sports }}</div>
+          <div class="kpi-label">Sport Categories</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="kpi-card d-flex align-items-center gap-3">
+          <div style="font-size:2.5rem;">🥇</div>
+          <div>
+            <div class="kpi-label">All-Time Medal Leader</div>
+            <div class="kpi-value" style="font-size:1.4rem;">{{ kpis.top_country }}</div>
+            <div style="color:var(--text-dim);font-size:0.85rem;">{{ kpis.top_country_medals }} total medals</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="kpi-card d-flex align-items-center gap-3">
+          <div style="font-size:2.5rem;">⚡</div>
+          <div>
+            <div class="kpi-label">Most Efficient Nation</div>
+            <div class="kpi-value" style="font-size:1.4rem;">{{ kpis.most_efficient }}</div>
+            <div style="color:var(--text-dim);font-size:0.85rem;">{{ kpis.most_efficient_pct }}% medal efficiency</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Charts Section ===== -->
+<section id="charts" class="py-5" style="background:var(--navy-mid);">
+  <div class="container">
+    <div class="section-header">
+      <h2>Interactive <span>Dashboards</span></h2>
+      <div class="divider"></div>
+      <p>All charts are generated in the backend using Pandas + Plotly — fully interactive and filterable.</p>
+    </div>
+
+    <!-- Tab Nav -->
+    <ul class="nav nav-tabs-custom mb-4" id="chartTabs">
+      <li class="nav-item"><a class="nav-link active" href="#" data-tab="trends">📈 Trends</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" data-tab="performance">🏅 Performance</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" data-tab="efficiency">⚡ Efficiency</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" data-tab="sports">⚽ Sports</a></li>
+    </ul>
+
+    <!-- Loading indicator -->
+    <div id="charts-loading" class="text-center py-5">
+      <div class="spinner-border spinner-gold" role="status" style="width:3rem;height:3rem;"></div>
+      <p class="mt-3" style="color:var(--text-dim);">Loading charts from server…</p>
+    </div>
+
+    <!-- Tab: Trends -->
+    <div class="chart-tab" id="tab-trends">
+      <div class="row">
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-graph-up me-1"></i>Olympic Medal Trends Over Time</div>
+            <div id="chart-medal-trends" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-house-fill me-1"></i>Host Nation Advantage</div>
+            <div id="chart-host-advantage" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-gender-ambiguous me-1"></i>Athlete Gender Distribution</div>
+            <div id="chart-gender-split" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Performance -->
+    <div class="chart-tab d-none" id="tab-performance">
+      <div class="row">
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-bar-chart-fill me-1"></i>Top 15 Countries by All-Time Medals</div>
+            <div id="chart-top-countries" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-globe me-1"></i>Regional Medal Share (Treemap)</div>
+            <div id="chart-region-share" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Efficiency -->
+    <div class="chart-tab d-none" id="tab-efficiency">
+      <div class="row">
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-scatter-chart me-1"></i>Sports Investment vs Medal Efficiency</div>
+            <div id="chart-efficiency-invest" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-lightning-fill me-1"></i>Top 20 Most Efficient Nations</div>
+            <div id="chart-efficiency-rank" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Sports -->
+    <div class="chart-tab d-none" id="tab-sports">
+      <div class="row">
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-trophy-fill me-1"></i>Top 12 Sport Categories by Medals</div>
+            <div id="chart-top-sports" class="chart-placeholder">
+              <div class="spinner-border spinner-gold"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== Country Deep-Dive ===== -->
+<section id="country-search-section" class="py-5">
+  <div class="container">
+    <div class="section-header">
+      <h2>Country <span>Deep-Dive</span></h2>
+      <div class="divider"></div>
+      <p>Select a country to see its individual medal breakdown across all Olympic Games.</p>
+    </div>
+    <div class="row justify-content-center mb-4">
+      <div class="col-md-8">
+        <div class="d-flex gap-2">
+          <select id="country-select" class="search-box">
+            <option value="">-- Select a Country --</option>
+            {% for c in countries %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn-search" onclick="loadCountryChart()">
+            <i class="bi bi-search"></i> Analyze
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-12">
+        <div class="chart-card" id="country-chart-card" style="display:none;">
+          <div class="chart-title" id="country-chart-title">Country Medal Breakdown</div>
+          <div id="chart-country" style="height:380px;"></div>
+        </div>
+        <div id="country-no-data" class="text-center py-4" style="display:none;color:var(--text-dim);">
+          <i class="bi bi-exclamation-circle me-2"></i>No data found for the selected country.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Leaderboard ===== -->
+<section id="leaderboard-section" class="py-5" style="background:var(--navy-mid);">
+  <div class="container">
+    <div class="section-header">
+      <h2>Medal <span>Leaderboard</span></h2>
+      <div class="divider"></div>
+      <p>Top 20 nations ranked by all-time Olympic medals, with efficiency and investment data.</p>
+    </div>
+    <div id="leaderboard-loading" class="text-center py-3">
+      <div class="spinner-border spinner-gold"></div>
+    </div>
+    <div class="table-responsive" id="leaderboard-table-wrap" style="display:none;">
+      <table class="table table-dark-custom w-100">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Country</th>
+            <th>Region</th>
+            <th>Total Medals</th>
+            <th>Efficiency (%)</th>
+            <th>Investment (M\$)</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Key Insights ===== -->
+<section id="insights-section" class="py-5">
+  <div class="container">
+    <div class="section-header">
+      <h2>Key <span>Insights</span></h2>
+      <div class="divider"></div>
+      <p>Data-backed findings from the Olympic performance analysis.</p>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="insight-card">
+          <h6>🏆 Dominant Nations</h6>
+          <p>USA, China, and Great Britain consistently lead medal counts, together accounting for over 35% of all medals from 1992–2026 in the dataset.</p>
+        </div>
+        <div class="insight-card">
+          <h6>📈 Rising Asian Powers</h6>
+          <p>China, South Korea, and Japan show exponential medal growth since 1992, backed by significant sports infrastructure investment (averaging \$4,700M+).</p>
+        </div>
+        <div class="insight-card">
+          <h6>🏠 Host Nation Advantage</h6>
+          <p>Host countries outperform their average by a measurable margin. The data confirms a consistent home advantage pattern across Summer and Winter Games.</p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="insight-card">
+          <h6>⚡ Small Nation Efficiency</h6>
+          <p>Nations like Tunisia, Slovenia, New Zealand, and Jamaica achieve the highest medal efficiency percentages — winning more medals per athlete sent.</p>
+        </div>
+        <div class="insight-card">
+          <h6>💰 Investment vs Returns</h6>
+          <p>Higher sports investment generally correlates with more medals, but efficiency (medals per athlete) shows diminishing returns for very large delegations.</p>
+        </div>
+        <div class="insight-card">
+          <h6>♀️ Gender Parity Progress</h6>
+          <p>Female athlete representation has grown substantially. The dataset covers both male and female competitors across all sports categories.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div class="container">
+    <p>
+      <span>Olympic Performance Intelligence Platform</span> — Built with Python, Flask, Pandas &amp; Plotly<br>
+      <small style="color:var(--text-dim);">Data: Cleaned Olympic datasets (1992–2026) | Academic project</small>
+    </p>
+  </div>
+</footer>
+
+<!-- Scroll to top -->
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="bi bi-arrow-up"></i>
+</button>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ============================================================
+// Olympic Platform — Frontend JavaScript
+// ============================================================
+
+// ---------- Tab switching ----------
+document.querySelectorAll('[data-tab]').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const tab = link.dataset.tab;
+    document.querySelectorAll('[data-tab]').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('.chart-tab').forEach(t => t.classList.add('d-none'));
+    link.classList.add('active');
+    document.getElementById('tab-' + tab).classList.remove('d-none');
+  });
+});
+
+// ---------- Chart rendering helpers ----------
+const PLOTLY_CONFIG = {
+  responsive: true,
+  displayModeBar: true,
+  modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+  toImageButtonOptions: { format: 'png', scale: 2 }
+};
+
+function renderChart(containerId, figData, height = 380) {
+  const el = document.getElementById(containerId);
+  if (!el || !figData || !figData.data) {
+    if (el) el.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:2rem;">No data available.</p>';
+    return;
+  }
+  figData.layout = figData.layout || {};
+  figData.layout.height = height;
+  figData.layout.paper_bgcolor = 'rgba(0,0,0,0)';
+  figData.layout.plot_bgcolor = 'rgba(0,0,0,0)';
+  figData.layout.font = { color: '#ccd6f6', family: 'Inter, sans-serif' };
+  Plotly.newPlot(containerId, figData.data, figData.layout, PLOTLY_CONFIG);
+}
+
+// ---------- Load all overview charts ----------
+async function loadOverviewCharts() {
+  try {
+    const response = await fetch('/api/charts/overview');
+    if (!response.ok) throw new Error('API error');
+    const data = await response.json();
+
+    document.getElementById('charts-loading').style.display = 'none';
+
+    renderChart('chart-medal-trends',    data.medal_trends,     400);
+    renderChart('chart-host-advantage',  data.host_advantage,   380);
+    renderChart('chart-gender-split',    data.gender_split,     380);
+    renderChart('chart-top-countries',   data.top_countries,    420);
+    renderChart('chart-region-share',    data.region_share,     420);
+    renderChart('chart-efficiency-invest', data.efficiency_vs_inv, 420);
+    renderChart('chart-efficiency-rank', data.efficiency_rank,  480);
+    renderChart('chart-top-sports',      data.top_sports,       420);
+  } catch (err) {
+    document.getElementById('charts-loading').innerHTML =
+      '<p style="color:var(--red);">⚠️ Failed to load charts. Is the Flask server running?</p>';
+    console.error(err);
+  }
+}
+
+// ---------- Country deep-dive ----------
+async function loadCountryChart() {
+  const select = document.getElementById('country-select');
+  const country = select.value;
+  if (!country) return;
+
+  const card = document.getElementById('country-chart-card');
+  const noData = document.getElementById('country-no-data');
+  const title = document.getElementById('country-chart-title');
+
+  card.style.display = 'none';
+  noData.style.display = 'none';
+
+  try {
+    const resp = await fetch('/api/charts/country?name=' + encodeURIComponent(country));
+    if (!resp.ok) {
+      noData.style.display = 'block';
+      return;
+    }
+    const fig = await resp.json();
+    title.textContent = country + ' — Medal Breakdown by Year';
+    card.style.display = 'block';
+    renderChart('chart-country', fig, 380);
+  } catch (err) {
+    noData.style.display = 'block';
+  }
+}
+// Allow Enter key on select
+document.getElementById('country-select')?.addEventListener('keypress', e => {
+  if (e.key === 'Enter') loadCountryChart();
+});
+
+// ---------- Leaderboard ----------
+async function loadLeaderboard() {
+  try {
+    const resp = await fetch('/api/leaderboard');
+    const rows = await resp.json();
+    const tbody = document.getElementById('leaderboard-body');
+
+    tbody.innerHTML = rows.map((r, i) => {
+      const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
+      return `<tr>
+        <td><span class="rank-badge ${rankClass}">${i + 1}</span></td>
+        <td><strong>${r.country}</strong></td>
+        <td><span style="font-size:0.8rem;color:var(--text-dim);">${r.region || ''}</span></td>
+        <td><strong style="color:var(--gold);">${r['Total Medals']}</strong></td>
+        <td>${r['Efficiency (%)'] || 'N/A'}%</td>
+        <td>\$${r['Investment (M$)'] || 'N/A'}M</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('leaderboard-loading').style.display = 'none';
+    document.getElementById('leaderboard-table-wrap').style.display = 'block';
+  } catch (err) {
+    console.error('Leaderboard error:', err);
+  }
+}
+
+// ---------- Scroll-to-top visibility ----------
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scroll-top');
+  btn.classList.toggle('visible', window.scrollY > 400);
+});
+
+// ---------- Navbar active on scroll ----------
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(sec => {
+    if (window.scrollY >= sec.offsetTop - 100) current = sec.id;
+  });
+  navLinks.forEach(link => {
+    link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+  });
+});
+
+// ---------- Init ----------
+document.addEventListener('DOMContentLoaded', () => {
+  loadOverviewCharts();
+  loadLeaderboard();
+});
+</script>
+
+</body>
+</html>

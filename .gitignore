@@ -1,0 +1,35 @@
+# Python virtual environments
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Temporary venv used during development
+/tmp/olympic_venv/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sensitive / local config
+.env
+*.env.local
+
+# Jupyter (if any notebooks get added later)
+.ipynb_checkpoints/
+
+# Logs
+*.log
